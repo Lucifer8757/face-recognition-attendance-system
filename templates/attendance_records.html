@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Records{% endblock %}
+{% block page_title %}Attendance Management & History{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+  <!-- Filter & Actions Bar -->
+  <div class="content-card mb-4">
+    <div class="content-card-body p-3">
+      <form method="GET" action="{{ url_for('attendance_records') }}" class="row g-2 align-items-center">
+        
+        <!-- Search Field -->
+        <div class="col-12 col-md-4">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" name="search" class="form-control" placeholder="Search by name, roll no, or ID..." value="{{ current_filters.search or '' }}">
+          </div>
+        </div>
+
+        <!-- Date Filter -->
+        <div class="col-6 col-md-2">
+          <input type="date" name="date" class="form-control form-control-sm" value="{{ current_filters.date or '' }}">
+        </div>
+
+        <!-- Department Filter -->
+        <div class="col-6 col-md-3">
+          <select name="department" class="form-select form-select-sm">
+            <option value="">All Departments</option>
+            <option value="Computer Science & Engineering" {% if current_filters.department == 'Computer Science & Engineering' %}selected{% endif %}>Computer Science</option>
+            <option value="Electronics & Communication" {% if current_filters.department == 'Electronics & Communication' %}selected{% endif %}>Electronics</option>
+            <option value="Mechanical Engineering" {% if current_filters.department == 'Mechanical Engineering' %}selected{% endif %}>Mechanical</option>
+            <option value="Electrical Engineering" {% if current_filters.department == 'Electrical Engineering' %}selected{% endif %}>Electrical</option>
+            <option value="Civil Engineering" {% if current_filters.department == 'Civil Engineering' %}selected{% endif %}>Civil</option>
+          </select>
+        </div>
+
+        <!-- Submit & Clear Buttons -->
+        <div class="col-12 col-md-3 d-flex gap-2 justify-content-end">
+          <button type="submit" class="btn btn-sm btn-primary-custom px-3">
+            <i class="bi bi-funnel-fill me-1"></i> Filter
+          </button>
+          <a href="{{ url_for('attendance_records') }}" class="btn btn-sm btn-light border px-2" title="Reset Filters">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </a>
+          <button type="button" class="btn btn-sm btn-success px-3" data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
+            <i class="bi bi-plus-circle me-1"></i> Manual Entry
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="content-card">
+    <div class="content-card-header">
+      <div class="d-flex align-items-center gap-2">
+        <h5 class="mb-0">Attendance Log</h5>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+          {{ records|length }} Records Found
+        </span>
+      </div>
+
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('export_attendance_csv', search=current_filters.search, date=current_filters.date, department=current_filters.department) }}" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1">
+          <i class="bi bi-file-earmark-spreadsheet"></i> Export Filtered CSV
+        </a>
+        <a href="{{ url_for('export_daily_sheet', date=current_filters.date or today_date) }}" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+          <i class="bi bi-file-earmark-text"></i> Daily Sheet (Present/Absent)
+        </a>
+      </div>
+    </div>
+
+    <div class="content-card-body p-0">
+      <div class="table-responsive">
+        <table class="custom-table mb-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Roll Number</th>
+              <th>Student Name</th>
+              <th>Department</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Verification Mode</th>
+              <th>Confidence</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if records %}
+              {% for r in records %}
+                <tr>
+                  <td class="text-muted small">#{{ r.id }}</td>
+                  <td class="fw-bold text-primary">{{ r.roll_number }}</td>
+                  <td>
+                    <div class="fw-semibold text-dark">{{ r.full_name }}</div>
+                    <small class="text-muted">{{ r.student_id }}</small>
+                  </td>
+                  <td><span class="badge bg-light text-dark border">{{ r.department }}</span></td>
+                  <td>{{ r.attendance_date }}</td>
+                  <td><i class="bi bi-clock me-1 text-muted"></i>{{ r.attendance_time }}</td>
+                  <td>
+                    {% if 'Face' in r.recognition_status %}
+                      <span class="badge badge-present"><i class="bi bi-person-check me-1"></i>{{ r.recognition_status }}</span>
+                    {% elif 'Manual' in r.recognition_status %}
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-pencil me-1"></i>{{ r.recognition_status }}</span>
+                    {% else %}
+                      <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ r.recognition_status }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if r.confidence_score %}
+                      <span class="badge bg-light text-dark border">
+                        {{ (r.confidence_score * 100)|round(1) }}%
+                      </span>
+                    {% else %}
+                      <span class="text-muted small">-</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    <form method="POST" action="{{ url_for('delete_attendance_record', record_id=r.id) }}" class="d-inline" onsubmit="return confirm('Delete this attendance entry for {{ r.full_name }}?');">
+                      <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Delete Record">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="9" class="text-center py-5 text-muted">
+                  <i class="bi bi-search fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                  No attendance records matched your filter criteria.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Manual Attendance Correction Modal (Requirement 9) -->
+<div class="modal fade" id="manualAttendanceModal" tabindex="-1" aria-labelledby="manualModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('manual_mark_attendance') }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="manualModalLabel"><i class="bi bi-pencil-square text-primary me-2"></i>Manual Attendance Override</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted mb-3">
+            Authorized administrator override for students experiencing temporary facial recognition issues, injury, or verified permission.
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Select Student</label>
+            <select class="form-select" name="student_id" required>
+              <option value="">-- Choose enrolled student --</option>
+              {% for s in all_students %}
+                <option value="{{ s.student_id }}">{{ s.roll_number }} - {{ s.full_name }} ({{ s.department }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Date</label>
+              <input type="date" class="form-control" name="attendance_date" value="{{ today_date }}" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Time</label>
+              <input type="time" class="form-control" name="attendance_time" value="09:00" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Status / Reason</label>
+            <select class="form-select" name="recognition_status" required>
+              <option value="Present (Manual Admin)" selected>Present (Manual Admin Verification)</option>
+              <option value="Present (Medical/Permission)">Present (Excused / Medical Permit)</option>
+              <option value="Late (Manual Admin)">Late Attendance (Admin Override)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom px-4">Save Manual Entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

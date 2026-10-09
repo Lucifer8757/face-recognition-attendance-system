@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics{% endblock %}
+{% block page_title %}Institutional Attendance Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+  <!-- Overview Metrics Banner -->
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">Total Conducted Sessions</div>
+        <div class="stat-value text-dark">{{ total_session_days }} <span class="fs-6 text-muted fw-normal">Days</span></div>
+        <div class="stat-meta text-muted">Distinct dates with recorded attendance</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">Institutional Average</div>
+        <div class="stat-value text-primary">{{ avg_attendance }}%</div>
+        <div class="stat-meta text-muted">Across all enrolled students</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">Eligible Students (≥ 75%)</div>
+        <div class="stat-value text-success">{{ eligible_count }} <span class="fs-6 text-muted fw-normal">/ {{ students|length }}</span></div>
+        <div class="stat-meta text-muted">Meeting 75% examination criteria</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cumulative Student Attendance Performance Table -->
+  <div class="content-card">
+    <div class="content-card-header">
+      <div>
+        <h5 class="mb-0">Cumulative Student Attendance Percentage</h5>
+        <small class="text-muted">Calculated against total active academic session days</small>
+      </div>
+      <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-sm btn-light border d-flex align-items-center gap-1">
+          <i class="bi bi-printer"></i> Print Summary
+        </button>
+        <a href="{{ url_for('export_attendance_csv') }}" class="btn btn-sm btn-primary-custom d-flex align-items-center gap-1">
+          <i class="bi bi-download"></i> Export All CSV
+        </a>
+      </div>
+    </div>
+
+    <div class="content-card-body p-0">
+      <div class="table-responsive">
+        <table class="custom-table mb-0">
+          <thead>
+            <tr>
+              <th>Roll No</th>
+              <th>Student Name</th>
+              <th>Department</th>
+              <th>Total Days</th>
+              <th>Present Days</th>
+              <th style="min-width: 180px;">Attendance Ratio</th>
+              <th>Percentage</th>
+              <th>Status</th>
+              <th class="text-end">Biometric Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in students %}
+              <tr>
+                <td class="fw-bold text-primary">{{ s.roll_number }}</td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ s.full_name }}</div>
+                  <small class="text-muted">{{ s.student_id }} &bull; {{ s.email }}</small>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ s.department }} ({{ s.semester }})</span></td>
+                <td>{{ total_session_days }}</td>
+                <td class="fw-bold text-success">{{ s.days_present }}</td>
+                <td>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar {% if s.percentage >= 75 %}bg-success{% elif s.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                         role="progressbar"
+                         style="width: {{ s.percentage }}%;"
+                         aria-valuenow="{{ s.percentage }}"
+                         aria-valuemin="0"
+                         aria-valuemax="100"></div>
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-bold {% if s.percentage >= 75 %}text-success{% elif s.percentage >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ s.percentage }}%
+                  </span>
+                </td>
+                <td>
+                  {% if s.percentage >= 75 %}
+                    <span class="badge badge-present">Eligible</span>
+                  {% elif s.percentage >= 60 %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Shortage</span>
+                  {% else %}
+                    <span class="badge badge-absent">Critical</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <!-- Right to Erasure / Delete Student & Biometrics (Requirement 9) -->
+                  <form method="POST" action="{{ url_for('delete_student_profile', student_id=s.student_id) }}" class="d-inline" onsubmit="return confirm('Permanently delete {{ s.full_name }} and all their facial embeddings and attendance records?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Delete Profile & Biometrics (Privacy GDPR/Safeguard)">
+                      <i class="bi bi-shield-x me-1"></i> Erase
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Student Registration{% endblock %}
+{% block page_title %}Enroll New Student Biometric Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  
+  <div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+
+      <div class="content-card">
+        <div class="content-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-person-plus-fill text-primary fs-5"></i>
+            <h5 class="mb-0">Student Enrollment Form</h5>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="fillPresenterDemoBtn">
+            <i class="bi bi-magic me-1"></i> Pre-fill Presenter Details
+          </button>
+        </div>
+
+        <div class="content-card-body">
+          <form id="registrationForm" method="POST" action="{{ url_for('register_student') }}" enctype="multipart/form-data">
+            
+            <div class="row g-4">
+              
+              <!-- Left Column: Student Details -->
+              <div class="col-12 col-lg-6">
+                <h6 class="text-uppercase text-muted fw-bold small mb-3">1. Academic & Personal Details</h6>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Student ID <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="student_id" id="student_id" placeholder="e.g. ST011" required>
+                  <div class="form-text small">Unique institutional identity identifier.</div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Full Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="full_name" id="full_name" placeholder="e.g. Maully Singh" required>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Roll Number <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="roll_number" id="roll_number" placeholder="e.g. CSE011" required>
+                </div>
+
+                <div class="row g-2 mb-3">
+                  <div class="col-sm-7">
+                    <label class="form-label small fw-semibold">Department <span class="text-danger">*</span></label>
+                    <select class="form-select" name="department" id="department" required>
+                      <option value="Computer Science & Engineering" selected>Computer Science & Engineering</option>
+                      <option value="Electronics & Communication">Electronics & Communication</option>
+                      <option value="Mechanical Engineering">Mechanical Engineering</option>
+                      <option value="Electrical Engineering">Electrical Engineering</option>
+                      <option value="Civil Engineering">Civil Engineering</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-5">
+                    <label class="form-label small fw-semibold">Semester <span class="text-danger">*</span></label>
+                    <select class="form-select" name="semester" id="semester" required>
+                      <option value="1st">1st Sem</option>
+                      <option value="2nd">2nd Sem</option>
+                      <option value="3rd">3rd Sem</option>
+                      <option value="4th">4th Sem</option>
+                      <option value="5th" selected>5th Sem</option>
+                      <option value="6th">6th Sem</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Email Address <span class="text-danger">*</span></label>
+                  <input type="email" class="form-control" name="email" id="email" placeholder="student@college.edu.in" required>
+                </div>
+
+                <!-- Privacy & Consent Checkbox -->
+                <div class="p-3 bg-light rounded-3 border mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="consent_given" id="consent_given" required>
+                    <label class="form-check-label small text-dark fw-semibold" for="consent_given">
+                      Informed Biometric Consent <span class="text-danger">*</span>
+                    </label>
+                  </div>
+                  <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                    I certify that the student has voluntarily enrolled and authorized generation of a 128D mathematical embedding strictly for classroom attendance. Biometric data will not be transmitted to third parties.
+                  </small>
+                </div>
+              </div>
+
+              <!-- Right Column: Face Photograph Acquisition -->
+              <div class="col-12 col-lg-6">
+                <h6 class="text-uppercase text-muted fw-bold small mb-3">2. Facial Biometric Photograph</h6>
+
+                <!-- Navigation Tabs: Webcam vs Upload -->
+                <ul class="nav nav-pills nav-fill mb-3" id="photoTab" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-2" id="webcam-tab" data-bs-toggle="pill" data-bs-target="#tab-webcam" type="button" role="tab">
+                      <i class="bi bi-camera me-1"></i> Live Webcam
+                    </button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2" id="upload-tab" data-bs-toggle="pill" data-bs-target="#tab-upload" type="button" role="tab">
+                      <i class="bi bi-upload me-1"></i> Upload Image
+                    </button>
+                  </li>
+                </ul>
+
+                <div class="tab-content" id="photoTabContent">
+                  
+                  <!-- Tab A: Live Webcam -->
+                  <div class="tab-pane fade show active" id="tab-webcam" role="tabpanel">
+                    <div class="camera-container mb-3" style="max-height: 280px;">
+                      <video id="regVideo" autoplay playsinline muted style="display: block; width: 100%; height: 100%; object-fit: cover;"></video>
+                      <canvas id="regCanvas" style="display: none; width: 100%; height: 100%; object-fit: cover;"></canvas>
+                      
+                      <!-- Face Positioning Guide Overlay -->
+                      <div id="faceGuide" style="position: absolute; top: 12%; left: 25%; width: 50%; height: 76%; border: 2px dashed rgba(56, 189, 248, 0.7); border-radius: 50%; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                        <span class="badge bg-dark bg-opacity-75 text-info px-2 py-1 small" style="font-size: 10px;">Center Face Here</span>
+                      </div>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-center">
+                      <button type="button" class="btn btn-outline-primary btn-sm" id="startRegCamBtn">
+                        <i class="bi bi-camera-video me-1"></i> Start Camera
+                      </button>
+                      <button type="button" class="btn btn-success btn-sm" id="capturePhotoBtn" disabled>
+                        <i class="bi bi-camera-fill me-1"></i> Snap Photo
+                      </button>
+                      <button type="button" class="btn btn-secondary btn-sm" id="retakePhotoBtn" style="display: none;">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Retake
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Tab B: Upload File -->
+                  <div class="tab-pane fade" id="tab-upload" role="tabpanel">
+                    <div class="border rounded-3 p-4 text-center bg-light mb-3">
+                      <i class="bi bi-cloud-arrow-up text-primary fs-1 mb-2 d-block"></i>
+                      <label class="form-label fw-semibold small mb-1">Select Student Photo File</label>
+                      <input type="file" class="form-control form-control-sm mx-auto" style="max-width: 320px;" id="photoFile" name="photo_file" accept="image/png, image/jpeg, image/webp">
+                      <div class="form-text small mt-2">JPG, PNG, or WEBP up to 5MB. Must clearly show face.</div>
+                    </div>
+
+                    <div id="filePreviewWrapper" class="text-center" style="display: none;">
+                      <img id="filePreviewImg" class="rounded-3 shadow-sm border" style="max-height: 180px; max-width: 100%; object-fit: cover;" alt="Preview">
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Hidden Input for base64 photo captured via webcam -->
+                <input type="hidden" name="captured_image_b64" id="capturedImageB64">
+
+                <!-- Live Photo Status Banner -->
+                <div class="mt-3" id="photoStatusAlert" style="display: none;">
+                  <div class="alert alert-success py-2 px-3 small d-flex align-items-center gap-2 mb-0">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <span id="photoStatusText">Photograph acquired and ready for facial feature extraction!</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{{ url_for('dashboard') }}" class="btn btn-light border px-4">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-primary-custom px-5" id="submitEnrollBtn">
+                <i class="bi bi-shield-check me-2"></i> Enroll Student & Extract Biometrics
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let regStream = null;
+  const regVideo = document.getElementById('regVideo');
+  const regCanvas = document.getElementById('regCanvas');
+  const startCamBtn = document.getElementById('startRegCamBtn');
+  const captureBtn = document.getElementById('capturePhotoBtn');
+  const retakeBtn = document.getElementById('retakePhotoBtn');
+  const faceGuide = document.getElementById('faceGuide');
+  const capturedInput = document.getElementById('capturedImageB64');
+  const photoAlert = document.getElementById('photoStatusAlert');
+  const photoStatusText = document.getElementById('photoStatusText');
+
+  // Start Camera
+  startCamBtn.addEventListener('click', async () => {
+    try {
+      regStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+      });
+      regVideo.srcObject = regStream;
+      regVideo.style.display = 'block';
+      regCanvas.style.display = 'none';
+      faceGuide.style.display = 'flex';
+      captureBtn.disabled = false;
+      startCamBtn.style.display = 'none';
+    } catch (err) {
+      alert('Unable to access webcam. Please check camera permissions or use the "Upload Image" tab.');
+      console.error(err);
+    }
+  });
+
+  // Capture Photo
+  captureBtn.addEventListener('click', () => {
+    if (!regStream) return;
+    const width = regVideo.videoWidth || 640;
+    const height = regVideo.videoHeight || 480;
+    regCanvas.width = width;
+    regCanvas.height = height;
+
+    const ctx = regCanvas.getContext('2d');
+    ctx.drawImage(regVideo, 0, 0, width, height);
+    const dataUrl = regCanvas.toDataURL('image/jpeg', 0.92);
+
+    capturedInput.value = dataUrl;
+
+    regVideo.style.display = 'none';
+    regCanvas.style.display = 'block';
+    faceGuide.style.display = 'none';
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display = 'inline-block';
+
+    photoAlert.style.display = 'block';
+    photoStatusText.textContent = 'Webcam snapshot captured. Face will be verified upon submission.';
+  });
+
+  // Retake Photo
+  retakeBtn.addEventListener('click', () => {
+    regVideo.style.display = 'block';
+    regCanvas.style.display = 'none';
+    faceGuide.style.display = 'flex';
+    captureBtn.style.display = 'inline-block';
+    retakeBtn.style.display = 'none';
+    capturedInput.value = '';
+    photoAlert.style.display = 'none';
+  });
+
+  // Upload file preview
+  const photoFileInput = document.getElementById('photoFile');
+  const filePreviewWrapper = document.getElementById('filePreviewWrapper');
+  const filePreviewImg = document.getElementById('filePreviewImg');
+
+  photoFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit.');
+        photoFileInput.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        filePreviewImg.src = evt.target.result;
+        filePreviewWrapper.style.display = 'block';
+        capturedInput.value = ''; // prioritize uploaded file
+        photoAlert.style.display = 'block';
+        photoStatusText.textContent = `Selected file: ${file.name} (${Math.round(file.size/1024)} KB)`;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Form submission check
+  document.getElementById('registrationForm').addEventListener('submit', (e) => {
+    const hasCaptured = capturedInput.value.length > 0;
+    const hasFile = photoFileInput.files.length > 0;
+    if (!hasCaptured && !hasFile) {
+      e.preventDefault();
+      alert('Please capture a photo using your webcam or upload a student photograph.');
+      return false;
+    }
+    document.getElementById('submitEnrollBtn').disabled = true;
+    document.getElementById('submitEnrollBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Extracting 128D Embedding...';
+  });
+
+  // Pre-fill Presenter Demo Button (Workshop participant)
+  document.getElementById('fillPresenterDemoBtn').addEventListener('click', () => {
+    document.getElementById('student_id').value = 'DEMO_PRESENTER';
+    document.getElementById('full_name').value = 'Maully Singh (Live Demo)';
+    document.getElementById('roll_number').value = 'CSE-WORKSHOP-01';
+    document.getElementById('department').value = 'Computer Science & Engineering';
+    document.getElementById('semester').value = '5th';
+    document.getElementById('email').value = 'maully.singh@polytechnic.ac.in';
+    document.getElementById('consent_given').checked = true;
+    alert('Presenter details populated! Now snap your photo with the webcam to enroll yourself for the live demonstration.');
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Settings & Privacy{% endblock %}
+{% block page_title %}System Settings & Privacy Safeguards{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+  <div class="row g-4">
+    
+    <!-- Left Column: Settings Configuration -->
+    <div class="col-12 col-lg-6">
+      
+      <!-- AI Engine & Recognition Settings -->
+      <div class="content-card mb-4">
+        <div class="content-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-sliders2 text-primary fs-5"></i>
+            <h5 class="mb-0">Recognition Parameters</h5>
+          </div>
+        </div>
+
+        <div class="content-card-body">
+          <form method="POST" action="{{ url_for('update_settings') }}">
+            
+            <!-- Similarity Threshold -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small fw-semibold mb-0">Cosine Similarity Threshold</label>
+                <span class="badge bg-primary px-2 py-1" id="thresholdDisplay">{{ settings.similarity_threshold }}</span>
+              </div>
+              <input type="range" class="form-range" name="similarity_threshold" id="settingsThresholdSlider" min="0.25" max="0.65" step="0.01" value="{{ settings.similarity_threshold }}">
+              <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
+                <span>0.25 (Lenient / Higher Recall)</span>
+                <span class="fw-bold">0.38 (Recommended Balanced)</span>
+                <span>0.65 (Strict / High Precision)</span>
+              </div>
+              <small class="text-muted d-block mt-2">
+                Controls the minimum mathematical vector similarity between the live camera face and enrolled 128D embeddings.
+              </small>
+            </div>
+
+            <!-- Anti-Spoofing / Liveness Toggle -->
+            <div class="mb-4 p-3 bg-light rounded-3 border">
+              <div class="form-check form-switch mb-1">
+                <input class="form-check-input" type="checkbox" name="liveness_detection" id="livenessCheck" value="1" {% if settings.liveness_detection == '1' %}checked{% endif %}>
+                <label class="form-check-label fw-semibold small text-dark" for="livenessCheck">
+                  Passive Sharpness / Anti-Spoofing Heuristic
+                </label>
+              </div>
+              <small class="text-muted d-block" style="font-size: 12px;">
+                Flags overly blurry frames and monitors texture variance to detect low-resolution paper printouts.
+              </small>
+            </div>
+
+            <!-- Institution Name -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Institution Name</label>
+              <input type="text" class="form-control" name="institution_name" value="{{ settings.institution_name }}">
+            </div>
+
+            <!-- Academic Year -->
+            <div class="mb-4">
+              <label class="form-label small fw-semibold">Academic Year</label>
+              <input type="text" class="form-control" name="academic_year" value="{{ settings.academic_year }}">
+            </div>
+
+            <button type="submit" class="btn btn-primary-custom w-100">
+              <i class="bi bi-save me-1"></i> Save Configuration
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Workshop Dataset Re-seed Tool -->
+      <div class="content-card">
+        <div class="content-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-repeat text-warning fs-5"></i>
+            <h5 class="mb-0">Demonstration Dataset Control</h5>
+          </div>
+        </div>
+        <div class="content-card-body">
+          <p class="small text-muted mb-3">
+            Quickly reset the sample database to the 10 fictional students from Table 1 of the workshop report (Aarav Kumar, Ananya Sharma, etc.) for presentation purposes.
+          </p>
+          <form method="POST" action="{{ url_for('reseed_database_route') }}" onsubmit="return confirm('Re-seed the database with 10 sample students? Existing test data will be retained.');">
+            <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+              <i class="bi bi-database-fill-gear me-1"></i> Seed 10 Fictional Students & Demo Records
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Privacy, Ethics & Security Architecture (Requirement 9 & Report Page 13) -->
+    <div class="col-12 col-lg-6">
+      
+      <div class="content-card mb-4">
+        <div class="content-card-header bg-navy text-white" style="background: #1e293b;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-lock-fill text-info fs-5"></i>
+            <h5 class="mb-0 text-white">Biometric Privacy & Ethics Safeguards</h5>
+          </div>
+        </div>
+
+        <div class="content-card-body">
+          <div class="alert alert-info py-2 small mb-4">
+            <i class="bi bi-info-circle me-1"></i>
+            Complies with institutional privacy principles for handling student biometric identification data.
+          </div>
+
+          <div class="d-flex flex-column gap-3">
+            
+            <div class="d-flex gap-3">
+              <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                <i class="bi bi-file-earmark-lock2-fill"></i>
+              </div>
+              <div>
+                <h6 class="fw-bold mb-1" style="font-size: 14px;">Informed Voluntary Consent</h6>
+                <p class="text-muted small mb-0">Biometric enrollment strictly requires explicit consent verification. Students without consent are not scanned or enrolled.</p>
+              </div>
+            </div>
+
+            <div class="d-flex gap-3">
+              <div class="rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                <i class="bi bi-folder-x"></i>
+              </div>
+              <div>
+                <h6 class="fw-bold mb-1" style="font-size: 14px;">Non-Public Isolated Storage</h6>
+                <p class="text-muted small mb-0">Embeddings and facial photos are stored outside the public <code>/static/</code> directory in <code>data/secure_storage/</code>, accessible only to authenticated administrators.</p>
+              </div>
+            </div>
+
+            <div class="d-flex gap-3">
+              <div class="rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                <i class="bi bi-trash3-fill"></i>
+              </div>
+              <div>
+                <h6 class="fw-bold mb-1" style="font-size: 14px;">Right to Erasure (Deletion)</h6>
+                <p class="text-muted small mb-0">Administrators can delete a student's profile at any time, immediately purging their 128D mathematical vector, photos, and attendance traces.</p>
+              </div>
+            </div>
+
+            <div class="d-flex gap-3">
+              <div class="rounded-circle bg-info-subtle text-info d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                <i class="bi bi-hdd-network-fill"></i>
+              </div>
+              <div>
+                <h6 class="fw-bold mb-1" style="font-size: 14px;">Zero Cloud Transmission</h6>
+                <p class="text-muted small mb-0">All inference runs 100% locally on the host machine using native OpenCV ONNX models. No biometric features leave the premises.</p>
+              </div>
+            </div>
+
+            <div class="d-flex gap-3">
+              <div class="rounded-circle bg-warning-subtle text-warning d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+              </div>
+              <div>
+                <h6 class="fw-bold mb-1" style="font-size: 14px;">Unrecognized ≠ Proof of Absence</h6>
+                <p class="text-muted small mb-0">Failure to match is never treated as definitive absence. Authorized administrators can manually verify attendance via the override portal.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Limitations of Face Recognition Card (Page 13 of Workshop report) -->
+      <div class="content-card">
+        <div class="content-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-patch-exclamation text-danger fs-5"></i>
+            <h5 class="mb-0">Computer Vision System Limitations</h5>
+          </div>
+        </div>
+        <div class="content-card-body small text-muted">
+          <ul class="mb-0 ps-3">
+            <li class="mb-2"><strong>Lighting Variance:</strong> Low illumination or strong backlighting reduces feature extraction precision.</li>
+            <li class="mb-2"><strong>Facial Occlusions:</strong> Masks, dark glasses, or excessive tilt obstruct key facial landmarks (eyes, nose tip, mouth corners).</li>
+            <li class="mb-2"><strong>Basic 2D Camera Vulnerability:</strong> Standard consumer webcams capture 2D RGB imagery and lack 3D structured light or infrared depth sensors. Hence, high-quality photographs could spoof standard 2D systems without hardware liveness detection.</li>
+            <li><strong>Scale & Database Size:</strong> Linear cosine search is instantaneous for classroom sizes (&lt; 1,000 students); larger university deployments would require indexed vector stores (e.g. FAISS).</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const settingsSlider = document.getElementById('settingsThresholdSlider');
+  const thresholdDisplay = document.getElementById('thresholdDisplay');
+  if (settingsSlider && thresholdDisplay) {
+    settingsSlider.addEventListener('input', (e) => {
+      thresholdDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}System Overview & Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+  <!-- Welcome / Quick Announcement Banner -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 text-white rounded-4 overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+        <div class="card-body p-4 p-md-5 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+          <div>
+            <div class="badge bg-primary px-3 py-1 mb-2 rounded-pill"><i class="bi bi-cpu me-1"></i> AI Computer Vision Engine Active</div>
+            <h3 class="fw-bold mb-1">Face Recognition Attendance Dashboard</h3>
+            <p class="text-secondary mb-0">Government Women's Polytechnic, Ranchi • Diploma CSE 5th Sem Workshop 2026</p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('face_attendance') }}" class="btn btn-primary px-4 py-2 rounded-pill fw-semibold shadow-sm d-flex align-items-center gap-2">
+              <i class="bi bi-camera-video-fill"></i>
+              <span>Launch Live Camera</span>
+            </a>
+            <a href="{{ url_for('register_student') }}" class="btn btn-outline-light px-4 py-2 rounded-pill fw-semibold d-flex align-items-center gap-2">
+              <i class="bi bi-person-plus"></i>
+              <span>Enroll Student</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 Summary KPI Cards -->
+  <div class="row g-4 mb-4">
+    <!-- 1. Total Registered Students -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="stat-label">Total Enrolled</div>
+          <div class="stat-icon-wrapper stat-icon-blue">
+            <i class="bi bi-people-fill"></i>
+          </div>
+        </div>
+        <div class="stat-value">{{ stats.total_students }}</div>
+        <div class="stat-meta text-muted">
+          <i class="bi bi-database me-1"></i> Biometric profiles registered
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Present Today -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="stat-label">Present Today</div>
+          <div class="stat-icon-wrapper stat-icon-emerald">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+        </div>
+        <div class="stat-value text-success">{{ stats.present_today }}</div>
+        <div class="stat-meta text-muted">
+          <i class="bi bi-calendar-check me-1"></i> Marked for {{ stats.target_date }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Absent Today -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="stat-label">Absent / Unmarked</div>
+          <div class="stat-icon-wrapper stat-icon-rose">
+            <i class="bi bi-x-circle-fill"></i>
+          </div>
+        </div>
+        <div class="stat-value text-danger">{{ stats.absent_today }}</div>
+        <div class="stat-meta text-muted">
+          <i class="bi bi-clock-history me-1"></i> Pending face verification
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Today's Attendance Percentage -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="stat-label">Attendance Rate</div>
+          <div class="stat-icon-wrapper stat-icon-amber">
+            <i class="bi bi-pie-chart-fill"></i>
+          </div>
+        </div>
+        <div class="stat-value text-primary">{{ stats.attendance_percentage }}%</div>
+        <div class="stat-meta text-muted">
+          <i class="bi bi-graph-up me-1"></i> Today's turnout ratio
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4 mb-4">
+    <!-- Doughnut Chart: Present vs Absent (Page 11 graphic replica) -->
+    <div class="col-12 col-lg-4">
+      <div class="content-card h-100">
+        <div class="content-card-header">
+          <h5><i class="bi bi-pie-chart text-primary me-2"></i>Today's Attendance Ratio</h5>
+          <span class="badge bg-light text-dark border">{{ stats.target_date }}</span>
+        </div>
+        <div class="content-card-body d-flex flex-column align-items-center justify-content-center">
+          <div style="position: relative; height: 230px; width: 230px;">
+            <canvas id="dailyRatioChart"></canvas>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+              <div class="h2 fw-bold text-dark mb-0">{{ stats.attendance_percentage }}%</div>
+              <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Present</small>
+            </div>
+          </div>
+          <div class="d-flex gap-4 mt-3 text-center small">
+            <div>
+              <span class="badge rounded-pill bg-success me-1">&bull;</span> Present: <strong>{{ stats.present_today }}</strong>
+            </div>
+            <div>
+              <span class="badge rounded-pill bg-danger me-1">&bull;</span> Absent: <strong>{{ stats.absent_today }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line / Bar Trend Chart -->
+    <div class="col-12 col-lg-8">
+      <div class="content-card h-100">
+        <div class="content-card-header">
+          <h5><i class="bi bi-graph-up-arrow text-primary me-2"></i>Attendance Trends & History</h5>
+          <div class="btn-group btn-group-sm">
+            <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary">Detailed Analytics</a>
+          </div>
+        </div>
+        <div class="content-card-body">
+          <div style="position: relative; height: 260px;">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Attendance Activity Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="content-card">
+        <div class="content-card-header">
+          <h5><i class="bi bi-clock-history text-primary me-2"></i>Today's Real-Time Attendance Log</h5>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('export_daily_sheet', date=stats.target_date) }}" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+              <i class="bi bi-download"></i> Export Today's Sheet
+            </a>
+            <a href="{{ url_for('attendance_records') }}" class="btn btn-sm btn-light border">
+              View All Records
+            </a>
+          </div>
+        </div>
+        <div class="content-card-body p-0">
+          <div class="table-responsive">
+            <table class="custom-table mb-0">
+              <thead>
+                <tr>
+                  <th>Roll No</th>
+                  <th>Student Name</th>
+                  <th>Department</th>
+                  <th>Time Marked</th>
+                  <th>Verification Status</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if stats.recent_logs %}
+                  {% for log in stats.recent_logs %}
+                    <tr>
+                      <td class="fw-bold text-primary">{{ log.roll_number }}</td>
+                      <td>
+                        <div class="fw-semibold text-dark">{{ log.full_name }}</div>
+                        <small class="text-muted">{{ log.student_id }}</small>
+                      </td>
+                      <td><span class="badge bg-light text-dark border">{{ log.department }} ({{ log.semester }})</span></td>
+                      <td><i class="bi bi-clock me-1 text-muted"></i>{{ log.attendance_time }}</td>
+                      <td>
+                        <span class="badge badge-present">
+                          <i class="bi bi-check2-circle me-1"></i>{{ log.recognition_status }}
+                        </span>
+                      </td>
+                      <td>
+                        {% if log.confidence_score %}
+                          <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                            {{ (log.confidence_score * 100)|round(1) }}% Match
+                          </span>
+                        {% else %}
+                          <span class="text-muted">N/A</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                      <i class="bi bi-camera-video fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                      No attendance has been recorded for today yet.
+                      <div class="mt-2">
+                        <a href="{{ url_for('face_attendance') }}" class="btn btn-sm btn-primary-custom">
+                          Open Camera Scanner
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Doughnut Chart Setup
+  const dailyCtx = document.getElementById('dailyRatioChart').getContext('2d');
+  new Chart(dailyCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Present', 'Absent'],
+      datasets: [{
+        data: [{{ stats.present_today }}, {{ stats.absent_today }}],
+        backgroundColor: ['#10b981', '#ef4444'],
+        borderWidth: 0,
+        cutout: '76%'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return ' ' + context.label + ': ' + context.parsed + ' students';
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Trend Chart Setup
+  const trendCtx = document.getElementById('trendChart').getContext('2d');
+  const trendLabels = {{ stats.trend_data|map(attribute='date')|list|tojson }};
+  const trendCounts = {{ stats.trend_data|map(attribute='count')|list|tojson }};
+
+  new Chart(trendCtx, {
+    type: 'line',
+    data: {
+      labels: trendLabels.length ? trendLabels : ['Today'],
+      datasets: [{
+        label: 'Present Students',
+        data: trendCounts.length ? trendCounts : [{{ stats.present_today }}],
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#2563eb',
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#64748b' },
+          grid: { color: '#f1f5f9' }
+        },
+        x: {
+          ticks: { color: '#64748b' },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

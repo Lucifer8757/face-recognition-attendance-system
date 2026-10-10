@@ -7,7 +7,7 @@ cd /d "C:\Users\ankit\.gemini\antigravity\scratch\face-attendance-system"
 
 echo ======================================================================
 echo    AI Face Recognition Attendance System - GitHub Uploader
-echo    Target: https://github.com/Lucifer8757/face-recoginition-attendace-system
+echo    Target: https://github.com/Lucifer8757/face-recognition-attendance-system
 echo ======================================================================
 echo.
 
@@ -26,7 +26,7 @@ if "%CHOICE%"=="1" (
     echo.
     set /p GHTOKEN="Paste your GitHub Personal Access Token here: "
     if not "%GHTOKEN%"=="" (
-        git remote set-url origin https://%GHTOKEN%@github.com/Lucifer8757/face-recoginition-attendace-system.git
+        git remote set-url origin https://%GHTOKEN%@github.com/Lucifer8757/face-recognition-attendance-system.git
         echo.
         echo [*] Pushing code to main branch...
         git push -u origin main

@@ -4,7 +4,7 @@ import datetime
 from functools import wraps
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    flash, session, jsonify, Response, send_file
+    flash, session, jsonify, Response, send_file, send_from_directory
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -17,8 +17,18 @@ from database.seed import seed_database
 from services.attendance_service import AttendanceService
 from services.face_recognition_service import FaceRecognitionService
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(Config.BASE_DIR, 'templates'),
+    static_folder=os.path.join(Config.BASE_DIR, 'static'),
+    static_url_path='/static'
+)
 app.config.from_object(Config)
+
+@app.route('/static/<path:filename>')
+def serve_static_file(filename):
+    """Direct route to ensure static files are always served on serverless hosts."""
+    return send_from_directory(os.path.join(Config.BASE_DIR, 'static'), filename)
 
 # Initialize services
 attendance_service = AttendanceService()
